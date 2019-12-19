@@ -7,6 +7,7 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.google.common.base.Preconditions;
+import com.hx.util.ConnUtil;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
@@ -115,37 +116,6 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
     }
 
     /**
-     * 获取连接
-     *
-     * @param ip
-     * @param userName
-     * @param pwd
-     * @param port
-     * @return
-     */
-    public Connection getConn(String ip, String userName, String pwd, int port) {
-        Connection conn = new Connection(ip);
-        boolean blag = false;
-        try {
-            conn.connect();
-            boolean isAuthenticated = conn.authenticateWithPassword(userName, pwd);
-            if (isAuthenticated) {
-                blag = true;
-            }
-            if (isAuthenticated == false) {
-                throw new IOException("Authentication failed.文件scp到数据服务器时发生异常");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if (blag) {
-            return conn;
-        } else {
-            return null;
-        }
-    }
-
-    /**
      * 获取请求结果
      */
     public String getResult(String params, String url) {
@@ -159,17 +129,17 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
         String path = result.get("path").toString();
         String time = DateUtil.format(new Date(), "yyyyMMdd");
         path = path.replace("yyyyMMdd", time);
-        Connection conn = null;
+        Connection conn = ConnUtil.getConn(hostname, username, password, 22);
         FileReader fr = null;
         BufferedReader br = null;
         int line = 0;
         try {
-            conn = getConn(hostname, username, password, 22);
             File file = new File(filePath);
             if (!file.exists()) {
                 file.mkdir();
             }
             SCPClient client = new SCPClient(conn);
+
             client.get(path, filePath);
             String fileName = filePath + "/" + path.substring(path.lastIndexOf("/"));
             fr = new FileReader(fileName);
@@ -184,7 +154,7 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
                 br.close();
             }
             File file1 = new File(fileName);
-            if(file1.exists()){
+            if (file1.exists()) {
                 file1.delete();
             }
         } catch (Exception e) {

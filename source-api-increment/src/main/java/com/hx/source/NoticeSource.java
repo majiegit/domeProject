@@ -6,6 +6,7 @@ import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.StreamGobbler;
 import cn.hutool.json.JSONUtil;
 import com.google.common.base.Preconditions;
+import com.hx.util.ConnUtil;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
@@ -54,15 +55,8 @@ public class NoticeSource extends AbstractSource implements Configurable, Pollab
 
     @Override
     public Status process() throws EventDeliveryException {
+        Connection conn = ConnUtil.getConn(hostname, username, password, 22);
         try {
-            Connection conn = new Connection(hostname, 22);
-            conn.connect();
-            //进行身份认证
-            boolean isAuthenticated = conn.authenticateWithPassword(
-                    username, password);
-            if (isAuthenticated == false) {
-                throw new IOException("Authentication failed.");
-            }
             //开启一个Session
             Session sess = conn.openSession();
             //执行具体命令
@@ -96,9 +90,9 @@ public class NoticeSource extends AbstractSource implements Configurable, Pollab
             HashMap<String, Object> map = new HashMap<String, Object>();
             map.put("noticeList", resultList);
             String noticeList = JSONUtil.toJsonStr(map);
-            HashMap<String, String> resultMap= new HashMap<>();
-            resultMap.put("result",noticeList);
-            System.out.println("noticeList: "+noticeList);
+            HashMap<String, String> resultMap = new HashMap<>();
+            resultMap.put("result", noticeList);
+            System.out.println("noticeList: " + noticeList);
             //1.创建flume事件
             SimpleEvent event = new SimpleEvent();
             //2.将事件传给channel
@@ -146,16 +140,8 @@ public class NoticeSource extends AbstractSource implements Configurable, Pollab
     public ArrayList<String> getResult(List<String> fileNameList) {
         // 保存结果
         ArrayList<String> resultList = new ArrayList<>();
+        Connection conn = ConnUtil.getConn(hostname, username, password, 22);
         try {
-            Connection conn = new Connection(hostname, 22);
-            conn.connect();
-            //进行身份认证
-            boolean isAuthenticated = conn.authenticateWithPassword(
-                    username, password);
-            if (isAuthenticated == false) {
-                throw new IOException("Authentication failed.");
-            }
-
             for (String fileName : fileNameList) {
                 //开启一个Session
                 Session sess = conn.openSession();
@@ -165,7 +151,7 @@ public class NoticeSource extends AbstractSource implements Configurable, Pollab
                 //获取返回输出
                 InputStream stdout = new StreamGobbler(sess.getStdout());
                 BufferedReader stdoutReader = new BufferedReader(
-                        new InputStreamReader(stdout,"utf8"));
+                        new InputStreamReader(stdout, "utf8"));
                 PrintWriter out = new PrintWriter(sess.getStdin());
                 //进入通知文件存放的目录
                 out.println("cd /bcuq/workdir/incoming/cmacast/resourcefile/notice");

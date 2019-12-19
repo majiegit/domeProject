@@ -5,6 +5,7 @@ import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.StreamGobbler;
 import com.google.common.base.Preconditions;
+import com.hx.util.ConnUtil;
 import org.apache.flume.Context;
 import org.apache.flume.EventDeliveryException;
 import org.apache.flume.PollableSource;
@@ -44,19 +45,12 @@ public class SystemResourceSource extends AbstractSource implements Configurable
 
     @Override
     public Status process() throws EventDeliveryException {
-        Connection conn = new Connection(hostname, 22);
+        Connection conn = ConnUtil.getConn(hostname, username, password, 22);
         Session sess = null;
         PrintWriter out = null;
         InputStream stdout = null;
         BufferedReader stdoutReader = null;
         try {
-            conn.connect();
-            //进行身份认证
-            boolean isAuthenticated = conn.authenticateWithPassword(
-                    username, password);
-            if (isAuthenticated == false) {
-                throw new IOException("Authentication failed.");
-            }
             /**=================处理CPU================*/
             //开启一个Session
 
