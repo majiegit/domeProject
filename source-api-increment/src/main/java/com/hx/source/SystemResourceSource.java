@@ -16,10 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -162,7 +159,7 @@ public class SystemResourceSource extends AbstractSource implements Configurable
                     lists.add(dflist);
                 }
             }
-            Map<String, String> map = new HashMap<>();
+            Map<String, String> map = new LinkedHashMap<>();
             map.put("cpuPate", cpuRateResult);
             map.put("memory", memoryResult);
             for (ArrayList<String> dflist : lists) {
