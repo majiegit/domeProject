@@ -34,6 +34,7 @@ public class SystemResourceSink extends AbstractSink implements Configurable {
                 JSON parse = JSONUtil.parse(headers);
                 HttpRequest body = HttpRequest.post(url).body(parse);
                 body.execute().body();
+                logger.info("成功推送!");
             } else {
                 logger.info("even 为空!");
             }

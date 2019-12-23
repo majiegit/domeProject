@@ -97,7 +97,6 @@ public class NoticeSource extends AbstractSource implements Configurable, Pollab
             String noticeList = JSONUtil.toJsonStr(map);
             HashMap<String, String> resultMap = new HashMap<>();
             resultMap.put("result", noticeList);
-            System.out.println("noticeList: " + noticeList);
             //1.创建flume事件
             SimpleEvent event = new SimpleEvent();
             //2.将事件传给channel
