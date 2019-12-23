@@ -4,6 +4,7 @@ import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.StreamGobbler;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
@@ -66,7 +67,7 @@ public class SystemResourceSource extends AbstractSource implements Configurable
             //获取返回输出
             stdout = new StreamGobbler(sess.getStdout());
             stdoutReader = new BufferedReader(new InputStreamReader(stdout, "utf8"));
-            System.out.println("request conn success!!!");
+            System.out.println("System Resource request conn success!!!");
             out = new PrintWriter(sess.getStdin());
             // CPU
             out.println("top -n 1 | head -n 3");
@@ -176,6 +177,7 @@ public class SystemResourceSource extends AbstractSource implements Configurable
                 String value = dflist.get(dflist.size() - 2);
                 map.put(name, value);
             }
+            map.put("updateTime", DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
             sess.close();
 
             //1.创建flume事件

@@ -130,7 +130,7 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
         String time = DateUtil.format(new Date(), "yyyyMMdd");
         path = path.replace("yyyyMMdd", time);
         Connection conn = ConnUtil.getConn(hostname, username, password, port);
-        System.out.println("request conn success!!!");
+        System.out.println("AcceptingState request conn success!!!");
         FileReader fr = null;
         BufferedReader br = null;
         int line = 0;

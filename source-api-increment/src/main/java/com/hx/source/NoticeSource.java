@@ -72,7 +72,7 @@ public class NoticeSource extends AbstractSource implements Configurable, Pollab
             BufferedReader stdoutReader = new BufferedReader(
                     new InputStreamReader(stdout));
 
-            System.out.println("request conn success!!!");
+            System.out.println("Notice  request conn success!!!");
 
             PrintWriter out = new PrintWriter(sess.getStdin());
             //进入通知文件存放的目录
