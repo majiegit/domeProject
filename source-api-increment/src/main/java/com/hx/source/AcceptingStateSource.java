@@ -2,8 +2,10 @@ package com.hx.source;
 
 import ch.ethz.ssh2.*;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.google.common.base.Preconditions;
@@ -30,17 +32,10 @@ import java.util.regex.Pattern;
 public class AcceptingStateSource extends AbstractSource implements Configurable, PollableSource {
     private static Logger logger = LoggerFactory.getLogger(AcceptingStateSource.class);
     /**
-     * # 请求的主机地址
+     * 服务器请求地址
      */
-    private String hostname;
-    /**
-     * # 主机用户名
-     */
-    private String username;
-    /**
-     * # 主机密码
-     */
-    private String password;
+    private String requestUrl;
+
     /**
      * # 请求间隔时间  cron表达式
      */
@@ -76,7 +71,7 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
         getChannelProcessor().processEvent(event);
         //关闭Connection
         try {
-            Thread.sleep(60000);
+            Thread.sleep(120000);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -95,12 +90,8 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
 
     @Override
     public void configure(Context context) {
-        hostname = context.getString("hostname");
-        Preconditions.checkNotNull(hostname, "主机ip不能为空");
-        username = context.getString("username");
-        Preconditions.checkNotNull(username, "用户名不能为空");
-        password = context.getString("password");
-        Preconditions.checkNotNull(password, "密码不能为空");
+        requestUrl = context.getString("requestUrl");
+        Preconditions.checkNotNull(requestUrl, "服务器请求地址不能为空");
         interval = context.getString("interval");
         Preconditions.checkNotNull(interval, "数据请求请求频率不能为空");
         fileConfigUrl = context.getString("fileConfigUrl");
@@ -119,6 +110,15 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
      * 获取请求结果
      */
     public String getResult(String params, String url) {
+        String s = HttpUtil.get(requestUrl);
+        JSONObject json = JSONUtil.parseObj(JSONUtil.parseObj(s).get("data"));
+        String hostname = json.get("ip").toString();
+        String username = json.get("username").toString();
+        String password = json.get("password").toString();
+        Integer port = 22;
+        if (ObjectUtil.isNotNull(json.get("port"))) {
+            port = (Integer) json.get("port");
+        }
         // 获取成功接收状态配置文件
         Map<String, Object> map = new HashMap<>();
         map.put("name", params);
@@ -129,7 +129,8 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
         String path = result.get("path").toString();
         String time = DateUtil.format(new Date(), "yyyyMMdd");
         path = path.replace("yyyyMMdd", time);
-        Connection conn = ConnUtil.getConn(hostname, username, password, 22);
+        Connection conn = ConnUtil.getConn(hostname, username, password, port);
+        System.out.println("request conn success!!!");
         FileReader fr = null;
         BufferedReader br = null;
         int line = 0;

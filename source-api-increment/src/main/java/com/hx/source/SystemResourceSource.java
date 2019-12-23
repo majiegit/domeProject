@@ -4,6 +4,10 @@ import ch.ethz.ssh2.ChannelCondition;
 import ch.ethz.ssh2.Connection;
 import ch.ethz.ssh2.Session;
 import ch.ethz.ssh2.StreamGobbler;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.google.common.base.Preconditions;
 import com.hx.util.ConnUtil;
 import org.apache.flume.Context;
@@ -23,18 +27,12 @@ import java.util.regex.Pattern;
 
 public class SystemResourceSource extends AbstractSource implements Configurable, PollableSource {
     private static Logger logger = LoggerFactory.getLogger(NoticeSource.class);
+
     /**
-     * # 请求的主机地址
+     * 服务器请求地址
      */
-    private String hostname;
-    /**
-     * # 主机用户名
-     */
-    private String username;
-    /**
-     * # 主机密码
-     */
-    private String password;
+    private String requestUrl;
+
     /**
      * # 请求间隔时间  cron表达式
      */
@@ -42,7 +40,17 @@ public class SystemResourceSource extends AbstractSource implements Configurable
 
     @Override
     public Status process() throws EventDeliveryException {
-        Connection conn = ConnUtil.getConn(hostname, username, password, 22);
+
+        String s = HttpUtil.get(requestUrl);
+        JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.parseObj(s).get("data"));
+        String hostname = jsonObject.get("ip").toString();
+        String username = jsonObject.get("username").toString();
+        String password = jsonObject.get("password").toString();
+        Integer port = 22;
+        if (ObjectUtil.isNotNull(jsonObject.get("port"))) {
+            port = (Integer) jsonObject.get("port");
+        }
+        Connection conn = ConnUtil.getConn(hostname, username, password, port);
         Session sess = null;
         PrintWriter out = null;
         InputStream stdout = null;
@@ -58,6 +66,7 @@ public class SystemResourceSource extends AbstractSource implements Configurable
             //获取返回输出
             stdout = new StreamGobbler(sess.getStdout());
             stdoutReader = new BufferedReader(new InputStreamReader(stdout, "utf8"));
+            System.out.println("request conn success!!!");
             out = new PrintWriter(sess.getStdin());
             // CPU
             out.println("top -n 1 | head -n 3");
@@ -174,7 +183,7 @@ public class SystemResourceSource extends AbstractSource implements Configurable
             //2.将事件传给channel
             event.setHeaders(map);
             getChannelProcessor().processEvent(event);
-            Thread.sleep(60000);
+            Thread.sleep(120000);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -194,12 +203,8 @@ public class SystemResourceSource extends AbstractSource implements Configurable
 
     @Override
     public void configure(Context context) {
-        hostname = context.getString("hostname");
-        Preconditions.checkNotNull(hostname, "主机ip不能为空");
-        username = context.getString("username");
-        Preconditions.checkNotNull(username, "用户名不能为空");
-        password = context.getString("password");
-        Preconditions.checkNotNull(password, "密码不能为空");
+        requestUrl = context.getString("requestUrl");
+        Preconditions.checkNotNull(requestUrl, "主机请求地址不能为空");
         interval = context.getString("interval");
         Preconditions.checkNotNull(interval, "数据请求请求频率不能为空 ");
     }
