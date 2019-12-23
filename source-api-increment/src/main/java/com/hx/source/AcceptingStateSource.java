@@ -64,6 +64,7 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
         String error = getResult("失败接收日志", fileConfigUrl);
         resultMap.put("successNumber", success);
         resultMap.put("errorNumber", error);
+        resultMap.put("updateTime",DateUtil.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
         //1.创建flume事件
         SimpleEvent event = new SimpleEvent();
         //2.将事件传给channel
@@ -125,7 +126,7 @@ public class AcceptingStateSource extends AbstractSource implements Configurable
         HttpResponse execute = HttpRequest.get(url).form(map).execute();
         String body = execute.body();
         JSONObject jsonObject = JSONUtil.parseObj(body);
-        JSONObject result = (JSONObject) jsonObject.get("result");
+        JSONObject result = (JSONObject) jsonObject.get("data");
         String path = result.get("path").toString();
         String time = DateUtil.format(new Date(), "yyyyMMdd");
         path = path.replace("yyyyMMdd", time);

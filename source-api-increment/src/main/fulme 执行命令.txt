@@ -1,1 +1,10 @@
-flume-ng agent --conf ../conf --conf-file ../conf/notice.conf --name a1 -property flume.root.logger=INFO,console
+nohup flume-ng agent --conf ../conf --conf-file ../conf/acceptingstate.conf --name a1 -property flume.root.logger=INFO,console &
+
+
+后台启动
+nohup ./flume-ng agent -c ../conf -f ../conf/g01-taildir-avro-sink.conf -n agent1 -Dflume.root.logger=INFO,console &
+有人说直接加 & 就可以了，对，但是再加上nohup可以把原本在console输出的运行日志输出在nohup.out中
+
+
+// 查看运行中的flume
+ps -aux | grep flume
